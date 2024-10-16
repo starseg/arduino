@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Robô vigia Star Seg</title>
+    <style>
+      :root {
+        color-scheme: dark;
+      }
+      html {
+        font-family: Helvetica;
+        display: inline-block;
+        margin: 0px auto;
+        text-align: center;
+      }
+      .button {
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+        outline: none;
+        -webkit-tap-highlight-color: transparent;
+        background-color: transparent;
+        border: none;
+        border-radius: 100px;
+        color: #333;
+        padding: 0.5rem;
+        text-decoration: none;
+        font-size: 64px;
+        cursor: pointer;
+        aspect-ratio: 1/1;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+      .button:active {
+        color: #2c1704;
+        scale: 1.2;
+      }
+      .joystick {
+        width: 250px;
+        height: 250px;
+        border-radius: 1000px;
+        background-color: #eab308;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        margin-left: 3rem;
+      }
+      .side-arrows {
+        display: flex;
+        width: 100%;
+        justify-content: space-between;
+        align-items: center;
+      }
+      input[type="range"] {
+        -webkit-appearance: none; /* Remove o estilo padrão no WebKit */
+      }
+
+      input[type="range"]::-webkit-slider-runnable-track {
+        width: 100%;
+        height: 8px;
+        background: #a58525; /* Cor da barra */
+        border-radius: 5px;
+      }
+
+      input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none; /* Remove o estilo padrão */
+        width: 20px;
+        height: 20px;
+        background: #eab308; /* Cor do thumb */
+        border-radius: 50%;
+        cursor: pointer;
+        margin-top: -6px; /* Alinha o thumb com a barra */
+      }
+
+      input[type="range"]::-moz-range-track {
+        background: #eab308; /* Cor da barra no Firefox */
+        height: 8px;
+        border-radius: 5px;
+      }
+
+      input[type="range"]::-moz-range-thumb {
+        width: 20px;
+        height: 20px;
+        background: #eab308; /* Cor do thumb no Firefox */
+        border-radius: 50%;
+        cursor: pointer;
+      }
+
+      input[type="range"]::-ms-track {
+        width: 100%;
+        height: 8px;
+        background: transparent; /* Remove a cor padrão no Edge */
+        border-color: transparent;
+        color: transparent;
+      }
+
+      input[type="range"]::-ms-fill-lower {
+        background: #eab308; /* Cor da barra preenchida no Edge */
+      }
+
+      input[type="range"]::-ms-fill-upper {
+        background: #ffbf00; /* Cor da barra restante no Edge */
+      }
+
+      input[type="range"]::-ms-thumb {
+        width: 20px;
+        height: 20px;
+        background: #eab308; /* Cor do thumb no Edge */
+        border-radius: 50%;
+        cursor: pointer;
+      }
+      .rotate-message {
+        display: none; /* Oculta a mensagem por padrão */
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgb(0, 0, 0);
+        color: white;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 24px;
+        text-align: center;
+        z-index: 1000;
+      }
+      #stream {
+        width: 300px;
+        height: 200px;
+        background-color: #eee;
+      }
+    </style>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <script>
+      function moveForward() {
+        fetch("/forward");
+      }
+      function moveLeft() {
+        fetch("/left");
+      }
+      function stopRobot() {
+        fetch("/stop");
+      }
+      function moveRight() {
+        fetch("/right");
+      }
+      function moveReverse() {
+        fetch("/reverse");
+      }
+
+      function updateMotorSpeed(pos) {
+        document.getElementById("motorSpeed").innerHTML = pos;
+        fetch(`/speed?value=${pos}`);
+      }
+    </script>
+  </head>
+  <body>
+    <h1>Robô vigia Star Seg</h1>
+    <div class="rotate-message" id="rotateMessage">
+      Por favor, vire o dispositivo para o modo paisagem.
+    </div>
+    <div class="joystick">
+      <button
+        class="button"
+        onmousedown="moveForward()"
+        ontouchstart="moveForward()"
+        onmouseup="stopRobot()"
+        ontouchend="stopRobot()"
+      >
+        <i class="ph-arrow-fat-up ph-fill ph"></i>
+      </button>
+      <div class="side-arrows">
+        <button
+          class="button"
+          onmousedown="moveLeft()"
+          ontouchstart="moveLeft()"
+          onmouseup="stopRobot()"
+          ontouchend="stopRobot()"
+        >
+          <i class="ph-arrow-fat-left ph-fill ph"></i>
+        </button>
+        <button
+          class="button"
+          onmousedown="moveRight()"
+          ontouchstart="moveRight()"
+          onmouseup="stopRobot()"
+          ontouchend="stopRobot()"
+        >
+          <i class="ph-arrow-fat-right ph-fill ph"></i>
+        </button>
+      </div>
+      <button
+        class="button"
+        onmousedown="moveReverse()"
+        ontouchstart="moveReverse()"
+        onmouseup="stopRobot()"
+        ontouchend="stopRobot()"
+      >
+        <i class="ph-arrow-fat-down ph-fill ph"></i>
+      </button>
+    </div>
+    <img id="stream" src="http://192.168.0.101:81/stream" crossorigin="" />
+    <p>Velocidade: <span id="motorSpeed">0</span>%</p>
+    <input
+      type="range"
+      min="0"
+      max="100"
+      step="25"
+      id="motorSlider"
+      oninput="updateMotorSpeed(this.value)"
+      value="0"
+    />
+
+    <script>
+      function checkOrientation() {
+        // Se a largura for menor que a altura, significa que está em modo retrato
+        if (window.innerWidth < window.innerHeight) {
+          document.getElementById("rotateMessage").style.display = "flex"; // Exibe a mensagem
+        } else {
+          document.getElementById("rotateMessage").style.display = "none"; // Oculta a mensagem
+        }
+      }
+
+      // Verifica a orientação ao carregar a página
+      window.addEventListener("load", checkOrientation);
+
+      // Verifica a orientação ao mudar o tamanho da tela (quando o usuário gira o dispositivo)
+      window.addEventListener("resize", checkOrientation);
+    </script>
+  </body>
+</html>
