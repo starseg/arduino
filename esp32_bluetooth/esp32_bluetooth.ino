@@ -3,7 +3,7 @@
 //
 // This example creates a bridge between Serial and Classical Bluetooth (SPP)
 // and also demonstrate that SerialBT have the same functionalities of a normal Serial
-// Note: Pairing is authenticated automatically by this device
+// Note: Pairing is authenticated automatically by this device.
 
 #include "BluetoothSerial.h"
 
