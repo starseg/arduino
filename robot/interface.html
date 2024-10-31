@@ -129,34 +129,34 @@
         text-align: center;
         z-index: 1000;
       }
-      #stream {
-        width: 300px;
-        height: 200px;
-        background-color: #eee;
+
+      .container {
+        display: flex;
+        justify-content: space-around;
+      }
+
+      #photo {
+        width: 250px;
+        max-width: 100%;
+        height: auto;
+        background-color: #a58525;
       }
     </style>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <script>
-      function moveForward() {
-        fetch("/forward");
-      }
-      function moveLeft() {
-        fetch("/left");
-      }
-      function stopRobot() {
-        fetch("/stop");
-      }
-      function moveRight() {
-        fetch("/right");
-      }
-      function moveReverse() {
-        fetch("/reverse");
+      function toggleCheckbox(x) {
+        var xhr = new XMLHttpRequest();
+        xhr.open("GET", "/action?go=" + x, true);
+        xhr.send();
       }
 
       function updateMotorSpeed(pos) {
         document.getElementById("motorSpeed").innerHTML = pos;
         fetch(`/speed?value=${pos}`);
       }
+
+      window.onload = document.getElementById("photo").src =
+        window.location.href.slice(0, -1) + ":81/stream";
     </script>
   </head>
   <body>
@@ -164,72 +164,70 @@
     <div class="rotate-message" id="rotateMessage">
       Por favor, vire o dispositivo para o modo paisagem.
     </div>
-    <div class="joystick">
-      <button
-        class="button"
-        onmousedown="moveForward()"
-        ontouchstart="moveForward()"
-        onmouseup="stopRobot()"
-        ontouchend="stopRobot()"
-      >
-        <i class="ph-arrow-fat-up ph-fill ph"></i>
-      </button>
-      <div class="side-arrows">
+    <div class="container">
+      <div class="joystick">
         <button
           class="button"
-          onmousedown="moveLeft()"
-          ontouchstart="moveLeft()"
-          onmouseup="stopRobot()"
-          ontouchend="stopRobot()"
+          onmousedown="toggleCheckbox('forward')"
+          ontouchstart="toggleCheckbox('forward')"
+          onmouseup="toggleCheckbox('stop')"
+          ontouchend="toggleCheckbox('stop')"
         >
-          <i class="ph-arrow-fat-left ph-fill ph"></i>
+          <i class="ph-arrow-fat-up ph-fill ph"></i>
         </button>
+        <div class="side-arrows">
+          <button
+            class="button"
+            onmousedown="toggleCheckbox('left')"
+            ontouchstart="toggleCheckbox('left')"
+            onmouseup="toggleCheckbox('stop')"
+            ontouchend="toggleCheckbox('stop')"
+          >
+            <i class="ph-arrow-fat-left ph-fill ph"></i>
+          </button>
+          <button
+            class="button"
+            onmousedown="toggleCheckbox('right')"
+            ontouchstart="toggleCheckbox('right')"
+            onmouseup="toggleCheckbox('stop')"
+            ontouchend="toggleCheckbox('stop')"
+          >
+            <i class="ph-arrow-fat-right ph-fill ph"></i>
+          </button>
+        </div>
         <button
           class="button"
-          onmousedown="moveRight()"
-          ontouchstart="moveRight()"
-          onmouseup="stopRobot()"
-          ontouchend="stopRobot()"
+          onmousedown="toggleCheckbox('backward')"
+          ontouchstart="toggleCheckbox('backward')"
+          onmouseup="toggleCheckbox('stop')"
+          ontouchend="toggleCheckbox('stop')"
         >
-          <i class="ph-arrow-fat-right ph-fill ph"></i>
+          <i class="ph-arrow-fat-down ph-fill ph"></i>
         </button>
       </div>
-      <button
-        class="button"
-        onmousedown="moveReverse()"
-        ontouchstart="moveReverse()"
-        onmouseup="stopRobot()"
-        ontouchend="stopRobot()"
-      >
-        <i class="ph-arrow-fat-down ph-fill ph"></i>
-      </button>
+      <img src="" id="photo" />
     </div>
-    <img id="stream" src="http://192.168.0.101:81/stream" crossorigin="" />
-    <p>Velocidade: <span id="motorSpeed">0</span>%</p>
+
+    <p>Velocidade: <span id="motorSpeed">20</span>%</p>
     <input
       type="range"
       min="0"
       max="100"
-      step="25"
+      step="10"
       id="motorSlider"
       oninput="updateMotorSpeed(this.value)"
-      value="0"
+      value="20"
     />
-
     <script>
       function checkOrientation() {
-        // Se a largura for menor que a altura, significa que está em modo retrato
         if (window.innerWidth < window.innerHeight) {
-          document.getElementById("rotateMessage").style.display = "flex"; // Exibe a mensagem
+          document.getElementById("rotateMessage").style.display = "flex";
         } else {
-          document.getElementById("rotateMessage").style.display = "none"; // Oculta a mensagem
+          document.getElementById("rotateMessage").style.display = "none";
         }
       }
 
-      // Verifica a orientação ao carregar a página
       window.addEventListener("load", checkOrientation);
-
-      // Verifica a orientação ao mudar o tamanho da tela (quando o usuário gira o dispositivo)
       window.addEventListener("resize", checkOrientation);
     </script>
   </body>

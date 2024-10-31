@@ -36,6 +36,8 @@ const char* password = "esc242369";
   #define VSYNC_GPIO_NUM    25
   #define HREF_GPIO_NUM     23
   #define PCLK_GPIO_NUM     22
+  #define RED_LED_PIN       33
+  #define LED_PIN            4
 #else
   #error "Camera model not selected"
 #endif
@@ -48,11 +50,13 @@ const char* password = "esc242369";
 #define enablePin  2
 
 // Echo e Trigger pins
-//#define TRIGGER_PIN  19  // Arduino pin tied to trigger pin on the ultrasonic sensor.
-//#define ECHO_PIN     18  // Arduino pin tied to echo pin on the ultrasonic sensor.
+#define TRIGGER_PIN  3  // Arduino pin tied to trigger pin on the ultrasonic sensor.
+#define ECHO_PIN     1  // Arduino pin tied to echo pin on the ultrasonic sensor.
+
+
 
 // sonar instance
-//NewPing sonar(TRIGGER_PIN, ECHO_PIN, 100); // NewPing setup of pins and maximum distance.
+NewPing sonar(TRIGGER_PIN, ECHO_PIN, 100);
 int MAX_DISTANCE = 20;
 
 // Setting PWM properties
@@ -228,6 +232,13 @@ const char PROGMEM INDEX_HTML[] = R"rawliteral(
           xhr.open("GET", "/speed?value=" + pos, true);
           xhr.send()
         }
+
+        function updateLed(value) {
+          document.getElementById('ledIntensity').innerHTML = value;
+          var xhr = new XMLHttpRequest()
+          xhr.open("GET", "/led?value=" + value, true);
+          xhr.send()
+        }
       </script>
     </head>
     <body>
@@ -289,6 +300,17 @@ const char PROGMEM INDEX_HTML[] = R"rawliteral(
         oninput="updateMotorSpeed(this.value)"
         value="20"
       />
+
+      <p>Iluminação do Led: <span id="ledIntensity">0</span>%</p>
+      <input
+        type="range"
+        min="0"
+        max="100"
+        step="10"
+        id="ledSlider"
+        oninput="updateLed(this.value)"
+        value="0"
+      />
       <script>
         function checkOrientation() {
           if (window.innerWidth < window.innerHeight) {
@@ -306,19 +328,6 @@ const char PROGMEM INDEX_HTML[] = R"rawliteral(
   </html>
 
 )rawliteral";
-
-// void verifyDistance() {
-//   int distancia = sonar.ping_cm();
-
-//   Serial.print("Ping: ");
-//   Serial.print(distancia); // Ping returned, uS result in ping_result, convert to cm with US_ROUNDTRIP_CM.
-//   Serial.println("cm");
-
-//   if (distancia < MAX_DISTANCE && distancia > 0) {
-//     digitalWrite(motor2, LOW); 
-//     digitalWrite(motor4, LOW);  
-//   }
-// }
 
 static esp_err_t index_handler(httpd_req_t *req){
   httpd_resp_set_type(req, "text/html");
@@ -416,27 +425,50 @@ static esp_err_t cmd_handler(httpd_req_t *req){
 
   sensor_t * s = esp_camera_sensor_get();
   int res = 0;
+
+  int distancia = sonar.ping_cm();
   
   if(!strcmp(variable, "forward")) {
     Serial.println("Forward");
-    digitalWrite(MOTOR_1_PIN_1, 1);
-    digitalWrite(MOTOR_1_PIN_2, 0);
-    digitalWrite(MOTOR_2_PIN_1, 0);
-    digitalWrite(MOTOR_2_PIN_2, 1);
+
+    if (distancia < MAX_DISTANCE && distancia > 0) {
+      digitalWrite(MOTOR_1_PIN_2, 0);  
+      digitalWrite(MOTOR_2_PIN_2, 0); 
+    } else {
+      digitalWrite(MOTOR_1_PIN_1, 1);
+      digitalWrite(MOTOR_1_PIN_2, 0);
+      digitalWrite(MOTOR_2_PIN_1, 0);
+      digitalWrite(MOTOR_2_PIN_2, 1);
+    }
+
   }
   else if(!strcmp(variable, "left")) {
     Serial.println("Left");
-    digitalWrite(MOTOR_1_PIN_1, 0);
-    digitalWrite(MOTOR_1_PIN_2, 1);
-    digitalWrite(MOTOR_2_PIN_1, 0);
-    digitalWrite(MOTOR_2_PIN_2, 1);
+
+    if (distancia < MAX_DISTANCE && distancia > 0) {
+      digitalWrite(MOTOR_1_PIN_2, 0);  
+      digitalWrite(MOTOR_2_PIN_2, 0); 
+    } else {
+      digitalWrite(MOTOR_1_PIN_1, 0);
+      digitalWrite(MOTOR_1_PIN_2, 1);
+      digitalWrite(MOTOR_2_PIN_1, 0);
+      digitalWrite(MOTOR_2_PIN_2, 1);
+    }
+
   }
   else if(!strcmp(variable, "right")) {
     Serial.println("Right");
-    digitalWrite(MOTOR_1_PIN_1, 1);
-    digitalWrite(MOTOR_1_PIN_2, 0);
-    digitalWrite(MOTOR_2_PIN_1, 1);
-    digitalWrite(MOTOR_2_PIN_2, 0);
+
+    if (distancia < MAX_DISTANCE && distancia > 0) {
+      digitalWrite(MOTOR_1_PIN_2, 0);  
+      digitalWrite(MOTOR_2_PIN_2, 0); 
+    } else {
+      digitalWrite(MOTOR_1_PIN_1, 1);
+      digitalWrite(MOTOR_1_PIN_2, 0);
+      digitalWrite(MOTOR_2_PIN_1, 1);
+      digitalWrite(MOTOR_2_PIN_2, 0);
+    }
+
   }
   else if(!strcmp(variable, "backward")) {
     Serial.println("Backward");
@@ -445,6 +477,7 @@ static esp_err_t cmd_handler(httpd_req_t *req){
     digitalWrite(MOTOR_2_PIN_1, 1);
     digitalWrite(MOTOR_2_PIN_2, 0);
   }
+
   else if(!strcmp(variable, "stop")) {
     Serial.println("Stop");
     digitalWrite(MOTOR_1_PIN_1, 0);
@@ -503,14 +536,55 @@ static esp_err_t speed_handler(httpd_req_t *req){
     digitalWrite(MOTOR_2_PIN_1, 0);
     digitalWrite(MOTOR_2_PIN_2, 0); 
   } else { 
-    dutyCycle = map(value, 25, 100, 200, 255);
+    dutyCycle = map(value, 20, 100, 200, 255);
     ledcWrite(enablePin, dutyCycle);
     Serial.println("Motor speed set to " + String(value));
   }  
 
-  // if(res){
-  //   return httpd_resp_send_500(req);
-  // }
+  httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
+  return httpd_resp_send(req, NULL, 0);
+}
+
+static esp_err_t led_handler(httpd_req_t *req){
+  char*  buf;
+  size_t buf_len;
+  int value;
+  char value_str[32] = {0,};
+  
+  buf_len = httpd_req_get_url_query_len(req) + 1;
+  if (buf_len > 1) {
+    buf = (char*)malloc(buf_len);
+    if(!buf){
+      httpd_resp_send_500(req);
+      return ESP_FAIL;
+    }
+    if (httpd_req_get_url_query_str(req, buf, buf_len) == ESP_OK) {
+      if (httpd_query_key_value(buf, "value", value_str, sizeof(value_str)) == ESP_OK) {
+        value = atoi(value_str);
+      } else {
+        free(buf);
+        httpd_resp_send_404(req);
+        return ESP_FAIL;
+      }
+    free(buf);
+  } else {
+    httpd_resp_send_404(req);
+    return ESP_FAIL;
+    }
+  }
+
+  sensor_t * s = esp_camera_sensor_get();
+  int res = 0;
+  
+  Serial.println("A intensidade do led é: " + String(value));
+  
+  if (value == 0) {
+    ledcWrite(LED_PIN, 0);
+  } else { 
+    dutyCycle = map(value, 20, 100, 20, 200);
+    ledcWrite(LED_PIN, dutyCycle);
+    Serial.println("Led intensity set to " + String(value));
+  }  
 
   httpd_resp_set_hdr(req, "Access-Control-Allow-Origin", "*");
   return httpd_resp_send(req, NULL, 0);
@@ -532,6 +606,7 @@ void startCameraServer(){
     .handler   = cmd_handler,
     .user_ctx  = NULL
   };
+
   httpd_uri_t stream_uri = {
     .uri       = "/stream",
     .method    = HTTP_GET,
@@ -546,10 +621,18 @@ void startCameraServer(){
       .user_ctx  = NULL
   };
 
+  httpd_uri_t led_uri = {
+      .uri       = "/led",
+      .method    = HTTP_GET,
+      .handler   = led_handler,
+      .user_ctx  = NULL
+  };
+
   if (httpd_start(&camera_httpd, &config) == ESP_OK) {
     httpd_register_uri_handler(camera_httpd, &index_uri);
     httpd_register_uri_handler(camera_httpd, &cmd_uri);
     httpd_register_uri_handler(camera_httpd, &speed_uri);
+    httpd_register_uri_handler(camera_httpd, &led_uri);
   }
   config.server_port += 1;
   config.ctrl_port += 1;
@@ -559,23 +642,26 @@ void startCameraServer(){
   }
 }
 
-//unsigned long pingTimer;
-//unsigned long pingSpeed = 50;
+unsigned long pingTimer;
+unsigned long pingSpeed = 50;
 
 void setup() {
-  Serial.begin(115200);
+   Serial.begin(115200);
 
   // Set the Motor pins as outputs
   pinMode(MOTOR_1_PIN_1, OUTPUT);
   pinMode(MOTOR_1_PIN_2, OUTPUT);
   pinMode(MOTOR_2_PIN_1, OUTPUT);
   pinMode(MOTOR_2_PIN_2, OUTPUT);
+  pinMode(RED_LED_PIN, OUTPUT);
 
   // Configure PWM Pins
   ledcAttach(enablePin, freq, reso);
+  ledcAttach(LED_PIN, freq, reso);
     
-  // Initialize PWM with 0 duty cycle
+  // Initialize PWM with duty cycle
   ledcWrite(enablePin, 200);
+  ledcWrite(LED_PIN, 0);
 
   camera_config_t config;
   config.ledc_channel = LEDC_CHANNEL_0;
@@ -631,15 +717,26 @@ void setup() {
 
   startCameraServer();
 
-  //pingTimer = millis();
+  pingTimer = millis();
 }
 
+void verifyDistance() {
+  int distancia = sonar.ping_cm();
+
+  //Serial.print("Ping: ");
+  //Serial.print(distancia);
+  //Serial.println("cm");
+
+  if (distancia < MAX_DISTANCE && distancia > 0) {
+    ledcWrite(LED_PIN, 150);
+    digitalWrite(MOTOR_1_PIN_2, 0);  
+    digitalWrite(MOTOR_2_PIN_2, 0); 
+  }
+}
 
 void loop() {
-
-  // if (millis() >= pingTimer) {   // pingSpeed milliseconds since last ping, do another ping.
-  //   pingTimer += pingSpeed;      // Set the next ping time.
-  //   verifyDistance();
-  // }
-
+  if (millis() >= pingTimer) {   
+     pingTimer += pingSpeed; 
+     verifyDistance();
+  }
 }

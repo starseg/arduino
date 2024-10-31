@@ -334,23 +334,25 @@
 #define PCLK_GPIO_NUM  5
 
 #elif defined(CAMERA_MODEL_GOOUU_ESP32_S3_CAM)
-#define PWDN_GPIO_NUM  -1   // Power down não utilizado
-#define RESET_GPIO_NUM -1   // Reset não utilizado
-#define XCLK_GPIO_NUM  40   // Clock (XCLK conectado ao GPIO 40)
-#define SIOD_GPIO_NUM  17   // I2C Data (SDA conectado ao GPIO 17)
-#define SIOC_GPIO_NUM  18   // I2C Clock (SCL conectado ao GPIO 18)
+#define PWDN_GPIO_NUM  -1
+#define RESET_GPIO_NUM -1
+#define XCLK_GPIO_NUM  15 
+#define SIOD_GPIO_NUM  4
+#define SIOC_GPIO_NUM  5 
 
-#define Y9_GPIO_NUM    12   // Pinos de dados da câmera conectados aos pinos Y9-Y2
-#define Y8_GPIO_NUM    14
-#define Y7_GPIO_NUM    16
-#define Y6_GPIO_NUM    18
-#define Y5_GPIO_NUM    11
-#define Y4_GPIO_NUM    9
-#define Y3_GPIO_NUM    8
-#define Y2_GPIO_NUM    10
-#define VSYNC_GPIO_NUM 7   // VSYNC conectado ao GPIO 15
-#define HREF_GPIO_NUM  9    // HREF conectado ao GPIO 6
-#define PCLK_GPIO_NUM  17    // Pixel Clock (PCLK conectado ao GPIO 7)
+#define Y9_GPIO_NUM    16  
+#define Y8_GPIO_NUM    17
+#define Y7_GPIO_NUM    18
+#define Y6_GPIO_NUM    12
+#define Y5_GPIO_NUM    10
+#define Y4_GPIO_NUM    8
+#define Y3_GPIO_NUM    9
+#define Y2_GPIO_NUM    11
+#define VSYNC_GPIO_NUM 6 
+#define HREF_GPIO_NUM  7 
+#define PCLK_GPIO_NUM  13
+
+#define LED_GPIO_NUM   2
 
 
 #else
