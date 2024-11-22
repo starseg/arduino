@@ -31,7 +31,7 @@
 #define BUZZER_PIN 21  // buzzer para indicar resposta
 
 const size_t ESTIMATED_FACE_SIZE = 200 * 1024;  // tamanho estimado que um rosto ocupa na memória (200kb)
-#define FR_CONFIDENCE_THRESHOLD 0.6             // fator minimo para o sistema aceitar o rosto (de 0 a 1)
+#define FR_CONFIDENCE_THRESHOLD 0.7             // fator minimo para o sistema aceitar o rosto (de 0 a 1)
 
 camera_fb_t *fb = NULL;  // ponteiro do buffer da camera
 
@@ -65,6 +65,8 @@ static int run_face_recognition(fb_data_t *fb, std::list<dl::detect::result_t> *
     Serial.println("Não Autorizado!!");
     return -1;
   }
+
+  return -1;
 }
 
 // função para cadastrar o rosto
@@ -137,7 +139,7 @@ bool initCamera() {
   config.pin_sccb_scl = SIOC_GPIO_NUM;
   config.pin_pwdn = PWDN_GPIO_NUM;
   config.pin_reset = RESET_GPIO_NUM;
-  config.xclk_freq_hz = 16000000;
+  config.xclk_freq_hz = 20000000;
   config.grab_mode = CAMERA_GRAB_WHEN_EMPTY;
   config.fb_location = CAMERA_FB_IN_PSRAM;
   config.frame_size = FRAMESIZE_240X240;
